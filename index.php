@@ -22,7 +22,7 @@ function __autoload($className)
 try {
 
     $controller = Controller::getInstance();
-    $controller->dispatch();
+    $controller->forward();
 
 } catch (Exception $e) {
     echo $e->getMessage();
@@ -108,11 +108,36 @@ class Parameter
 class Controller
 {
     static private $controller;
+    
+    private $module;
+    private $action;
 
     private function __construct()
     {
+        $parameter = Parameter::getInstance();
+        if ($parameter->get('MO') == '') {
+            $this->module = DEFAULT_MODULE;
+        } else {
+            $this->module = $parameter->get('MO');
+        }
+        if ($parameter->get('AC') == '') {
+            $this->action = DEFAULT_ACTION;
+        } else {
+            $this->action = $parameter->get('AC');
+        }
            
     }
+    
+    public function getCurrentModule()
+    {
+        return $this->module;
+    }
+
+    public function getCurrentAction()
+    {
+        return $this->action;
+    }
+
 
     static public function getInstance()
     {
@@ -122,12 +147,19 @@ class Controller
         return self::$controller;
     }
 
-    public function forward($module,$action)
+    public function forward($module = '',$action = '')
     {
         
-        $className = 'Action_' . $action;
+        if ($module != '') {
+            $this->module = $module;
+        }
+        if ($action != '') {
+            $this->action = $action;
+        }
+        
+        $className = 'Action_' . $this->action;
 
-        $path = BASE_APP_DIR . '/modules/' . $module . '/actions/' . $action . '.php';
+        $path = BASE_APP_DIR . '/modules/' . $this->module . '/actions/' . $this->action . '.php';
         if (file_exists($path)) {
             require_once $path;
         } else {
@@ -136,7 +168,7 @@ class Controller
         
         $instance = new $className;
         $instance->execute();
-        $instance->view($module,$action);
+        $instance->view($this->module,$this->action);
 
     }
     
@@ -155,28 +187,6 @@ class Controller
         ob_end_clean();
         return $body;
     }
-
-
-
-
-    public function dispatch()
-    {
-        $parameter = Parameter::getInstance();
-        if ($parameter->get('MO') == '') {
-            $module = DEFAULT_MODULE;
-        } else {
-            $module = $parameter->get('MO');
-        }
-        if ($parameter->get('AC') == '') {
-            $action = DEFAULT_ACTION;
-        } else {
-            $action = $parameter->get('AC');
-        }
-
-        $this->forward($module,$action);
-    }
-
-
 
 }
 
