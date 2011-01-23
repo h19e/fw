@@ -52,6 +52,13 @@ abstract class Component
     }
 }
 
+abstract class Filter
+{
+    abstract public function execute();
+}
+
+
+
 
 class Parameter
 {
@@ -78,6 +85,9 @@ class Parameter
 
     public function __get($key)
     {
+        if (!isset($this->data->$key)) {
+            return '';
+        }
         if (is_string($this->data->$key)) {
             echo htmlspecialchars($this->data->$key);
         } 
@@ -102,6 +112,25 @@ class Parameter
     {   
         $this->data->$key = $value;
     }
+ 
+    public function exist($key)
+    {
+        if (isset($this->data->$key)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+   
+    public function __call($methodName,$args)
+    {
+        if (isset($this->data->$args[0]) && $this->data->$args[0] == $args[1]) {
+            echo $methodName;
+        }
+    }
+
+
 }
 
 
