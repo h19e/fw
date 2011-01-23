@@ -82,7 +82,8 @@ class Parameter
         }
         return self::$parameter;
     }
-
+    
+    //対象が文字列の場合は出力、それ以外の場合は取得
     public function __get($key)
     {
         if (!isset($this->data->$key)) {
@@ -112,7 +113,7 @@ class Parameter
     {   
         $this->data->$key = $value;
     }
- 
+
     public function exist($key)
     {
         if (isset($this->data->$key)) {
@@ -122,15 +123,42 @@ class Parameter
         }
     }
 
-   
-    public function __call($methodName,$args)
+    public function clear($key)
     {
-        if (isset($this->data->$args[0]) && $this->data->$args[0] == $args[1]) {
-            echo $methodName;
+        if (isset($this->data->$key)) {
+            unset($this->data->$key);
         }
     }
 
+    //引数が１つの場合は、メッソド名に対応した配列から引数をキーにした値を出力
+    //引数が２つの場合は、１つめの引数に対応したキーの値と２つめの引数の値を比較して
+    //同じ値がある場合は、メソッド名を出力
+    public function __call($methodName,$args)
+    {
 
+        switch (count($args)) {
+            case 1:
+                $option = $this->data->$methodName;
+                echo $option[$args[0]];
+                break;
+            case 2:    
+                if (isset($this->data->$args[0])) {
+                    if (is_array($this->data->$args[0])) {
+                        if (in_array($args[1],$this->data->$args[0])) {
+                            echo $methodName;
+                        }
+                    } else {
+                        if ($this->data->$args[0] == $args[1]) {
+                            echo $methodName;
+                        }
+                    }
+                }
+                break;
+            default:
+        }
+
+
+    }
 }
 
 
