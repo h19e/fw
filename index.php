@@ -75,7 +75,7 @@ class Parameter
         }
         return self::$parameter;
     }
-    
+
     public function __get($key)
     {
         if (is_string($this->data->$key)) {
@@ -83,12 +83,12 @@ class Parameter
         } 
         return $this->data->$key;
     }
-    
+
     public function __set($key,$value)
     {
         $this->data->$key = $value;
     }
-    
+
     public function get($key)
     {   
         if (isset($this->data->$key)) {
@@ -108,9 +108,13 @@ class Parameter
 class Controller
 {
     static private $controller;
-    
+
     private $module;
     private $action;
+
+    private $globalFilterPath = NULL;
+    private $filters = array();
+
 
     private function __construct()
     {
@@ -125,9 +129,9 @@ class Controller
         } else {
             $this->action = $parameter->get('AC');
         }
-           
+
     }
-    
+
     public function getCurrentModule()
     {
         return $this->module;
@@ -149,14 +153,14 @@ class Controller
 
     public function forward($module = '',$action = '')
     {
-        
+
         if ($module != '') {
             $this->module = $module;
         }
         if ($action != '') {
             $this->action = $action;
         }
-        
+
         $className = 'Action_' . $this->action;
 
         $path = BASE_APP_DIR . '/modules/' . $this->module . '/actions/' . $this->action . '.php';
@@ -165,13 +169,35 @@ class Controller
         } else {
             throw new Exception('no file exists');
         }
-        
+
+        //全体のフィルター
+        if (!isset($this->globalFilterPath)) {
+            $this->globalFilterPath = BASE_APP_DIR . '/filters/Global.php';
+            if (file_exists($this->globalFilterPath)) {
+                require_once $this->globalFilterPath;
+                $filterInstance = new Filter_Global;
+                $filterInstance->execute();
+            }
+        }
+
+        //モジュールごとのフィルター
+        if (!isset($this->filters[$this->module])) {
+            $this->filters[$this->module] = BASE_APP_DIR . '/filters/' . $this->module . '.php';
+            if (file_exists($this->filters[$this->module])) {
+                require_once $this->filters[$this->module];
+                $filterClassName = "Filter_" . $this->module;
+                $filterInstance = new $filterClassName;
+                $filterInstance->execute();
+            }
+        }
+
+
         $instance = new $className;
         $instance->execute();
         $instance->view($this->module,$this->action);
 
     }
-    
+
     public function component($module,$action)
     {
         $className = 'Component_' . $action;
