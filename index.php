@@ -47,8 +47,10 @@ abstract class Component
 
     public function view($module,$action)
     {
-        $parameter = Parameter::getInstance();
-        include BASE_APP_DIR . '/components/' . $module . '/templates/' . $action . '.tpl';
+        if (file_exists(BASE_APP_DIR . '/components/' . $module . '/templates/' . $action . '.tpl')) {
+            $parameter = Parameter::getInstance();
+            include BASE_APP_DIR . '/components/' . $module . '/templates/' . $action . '.tpl';
+        }
     }
 }
 
@@ -64,9 +66,11 @@ class Parameter
 {
     static private $parameter;
     private $data;
+    private $component;
     private function __construct()
     {
         $this->data = new stdClass;
+        $this->component = new stdClass;
         foreach ($_GET as $key => $value) {
             $this->data->$key = $value;
         }
@@ -113,6 +117,8 @@ class Parameter
     {   
         $this->data->$key = $value;
     }
+    
+
 
     public function exist($key)
     {
@@ -138,8 +144,10 @@ class Parameter
 
         switch (count($args)) {
             case 1:
-                $option = $this->data->$methodName;
-                echo $option[$args[0]];
+                if (isset($this->data->$methodName) && is_array($this->data->$methodName)) {
+                    $option = $this->data->$methodName;
+                    echo $option[$args[0]];
+                }
                 break;
             case 2:    
                 if (isset($this->data->$args[0])) {
@@ -268,6 +276,7 @@ class Controller
         $instance->view($module,$action);
         $body = ob_get_contents();
         ob_end_clean();
+        
         return $body;
     }
 
